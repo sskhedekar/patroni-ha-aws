@@ -53,6 +53,27 @@
   │  │prio=101 │  │ │  │prio=100 │  │ │  │prio=99  │  │
   │  └─────────┘  │ │  └─────────┘  │ │  └─────────┘  │
   └───────────────┘ └───────────────┘ └───────────────┘
+          │                 │                 │
+          │  archive_command (WAL push)        │
+          └─────────────────┼─────────────────┘
+                            │
+                ┌───────────▼───────────┐
+                │   pgbr-host           │
+                │   10.0.0.20           │
+                │   pgBackRest          │
+                │   (repo host)         │
+                └───────────┬───────────┘
+                            │ SSH (reads backup files from standby)
+                            │ writes backup + WAL
+                            ▼
+                ┌───────────────────────┐
+                │   S3 Bucket           │
+                │ pg-cluster-pgbackrest │
+                │   ap-south-1          │
+                │                       │
+                │  /archive/ ← WAL      │
+                │  /backup/  ← basebackup│
+                └───────────────────────┘
 ```
 
 ---
