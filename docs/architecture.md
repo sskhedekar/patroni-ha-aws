@@ -174,6 +174,77 @@ GET /replica  → 200 if node is Replica   (Patroni REST API)
 
 ---
 
+## pgBackRest — WAL Archiving Flow
+
+WAL archiving runs continuously on the primary. Every WAL segment written by PostgreSQL is pushed to S3 via `archive_command`.
+
+```
+pg-node-X (current primary)
+    │
+    │  PostgreSQL writes WAL segment
+    │  archive_command triggers:
+    │  pgbackrest --stanza=pg-cluster archive-push %p
+    │
+    ▼
+S3: pg-cluster-pgbackrest
+    └── /pgbackrest/archive/pg-cluster/17-1/
+            └── 000000050000000000000009-<hash>.gz  ← compressed WAL segment
+```
+
+- Runs on whichever node is the current primary
+- If archiving fails, PostgreSQL holds WAL locally until it succeeds
+- Provides continuous WAL for point-in-time recovery (PITR)
+
+---
+
+## pgBackRest — Backup Flow
+
+Full backup with `backup-standby=y`. Primary only handles checkpoint start/stop — all data files are read from a standby by pgbr-host.
+
+```
+pgbr-host (10.0.0.20)
+    │
+    │  1. SSH → primary (pg-node-X)
+    │     └── pg_backup_start() — signals PostgreSQL to start backup
+    │
+    │  2. Check standby lag — wait for standby to reach backup LSN
+    │
+    │  3. SSH → standby (pg-node-Y)
+    │     └── read all data files (979 files, 22.9MB)
+    │
+    │  4. SSH → primary
+    │     └── pg_backup_stop() — signals backup complete
+    │
+    │  5. Write compressed backup to S3
+    │
+    ▼
+S3: pg-cluster-pgbackrest
+    └── /pgbackrest/backup/pg-cluster/
+            └── 20260530-111320F/       ← backup label (date-time + F=full)
+                    ├── backup.manifest ← catalog, checksums
+                    └── pg_data/        ← compressed data files (3MB)
+```
+
+**Why standby for backup:**
+- Primary only handles checkpoint signals — no file I/O
+- Backup load (disk reads, network) falls entirely on the standby
+- Live write traffic on primary is completely unaffected
+
+**Restore flow:**
+```
+New/recovered node
+    │
+    │  pgbackrest --stanza=pg-cluster --delta restore
+    │  ├── reads backup.manifest from S3
+    │  ├── downloads data files from S3
+    │  └── replays WAL from S3 archive to reach consistent state
+    │
+    ▼
+PostgreSQL starts in standby mode → connects to primary → streaming replication
+```
+
+---
+
 ## Cluster State After Each Scenario
 
 ```
