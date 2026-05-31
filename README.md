@@ -127,28 +127,11 @@ patroni-ha-cluster/
 
 ## Future Scope
 
-### Monitoring and Observability
-- **Prometheus + postgres_exporter** — scrape PostgreSQL metrics (connections, cache hit ratio, lock waits, replication lag in bytes)
-- **patroni_exporter** — expose Patroni cluster state (leader, replica lag, timeline) as Prometheus metrics
-- **Grafana dashboards** — visualise cluster health, replication lag, backup status
-- **AlertManager** — page on lag threshold breached, node down, etcd quorum loss, backup age exceeded
-
-### Security
-- **AWS Secrets Manager** — store PostgreSQL credentials (superuser, replicator, rewind) in Secrets Manager instead of plain text in `patroni.yml`; retrieve via IAM role at startup
-- **SSL/TLS** — encrypt PostgreSQL connections, Patroni REST API, and etcd peer communication
-
-### Connection Pooling
-- **PgBouncer** — sits between application and HAProxy, pools connections, hides brief failover blips from the application entirely
-
-### Patroni + pgBackRest Replica Creation
-- Configure `create_replica_methods: pgbackrest` in `patroni.yml` — when Patroni needs to rebuild a replica, it restores from S3 instead of streaming from the primary. Primary is not involved at all during replica creation.
-
-### Additional DBA Scenarios
-- **Rolling minor version upgrade** — upgrade PostgreSQL 17.x → 17.y one node at a time, replicas first, zero downtime
-- **Replication slot monitoring** — track slot lag, prevent disk bloat from abandoned slots
-- **Synchronous replication** — configure `synchronous_standby_names` for zero data loss (RPO=0) at the cost of write latency
-
-### Infrastructure
-- **Multi-AZ deployment** — spread nodes across availability zones for true infrastructure-level HA
-- **Terraform automation** — automate the entire AWS infrastructure setup (VPC, EC2, IAM, S3, VPC endpoint)
-- **Ansible playbooks** — automate PostgreSQL, Patroni, etcd, HAProxy, Keepalived, pgBackRest installation and configuration
+| Area | Planned Addition |
+|---|---|
+| Monitoring | Prometheus + postgres_exporter + patroni_exporter + Grafana dashboards + AlertManager |
+| Security | AWS Secrets Manager for credentials + SSL/TLS for PostgreSQL, etcd, and Patroni REST API |
+| Connection Pooling | PgBouncer between application and HAProxy |
+| Backup | `create_replica_methods: pgbackrest` — Patroni rebuilds replicas from S3, not from primary |
+| DBA Scenarios | Rolling minor version upgrade, replication slot monitoring, synchronous replication |
+| Infrastructure | Multi-AZ deployment, Terraform for AWS setup, Ansible for cluster automation |
