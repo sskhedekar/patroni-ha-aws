@@ -122,3 +122,33 @@ patroni-ha-cluster/
 - **`patronictl edit-config` is the right tool** — never edit `postgresql.conf` directly. Config goes to etcd, all nodes pick it up within 10 seconds.
 - **pgBackRest dedicated repo host** — the production-correct architecture: repo host SSHes into PG nodes to read backup files; primary only handles checkpoint start/stop.
 - **PostgreSQL timelines** — every leadership change increments the timeline number, stamped into WAL segment filenames. This is how replicas know where to start streaming after a failover.
+
+---
+
+## Future Scope
+
+### Monitoring and Observability
+- **Prometheus + postgres_exporter** — scrape PostgreSQL metrics (connections, cache hit ratio, lock waits, replication lag in bytes)
+- **patroni_exporter** — expose Patroni cluster state (leader, replica lag, timeline) as Prometheus metrics
+- **Grafana dashboards** — visualise cluster health, replication lag, backup status
+- **AlertManager** — page on lag threshold breached, node down, etcd quorum loss, backup age exceeded
+
+### Security
+- **AWS Secrets Manager** — store PostgreSQL credentials (superuser, replicator, rewind) in Secrets Manager instead of plain text in `patroni.yml`; retrieve via IAM role at startup
+- **SSL/TLS** — encrypt PostgreSQL connections, Patroni REST API, and etcd peer communication
+
+### Connection Pooling
+- **PgBouncer** — sits between application and HAProxy, pools connections, hides brief failover blips from the application entirely
+
+### Patroni + pgBackRest Replica Creation
+- Configure `create_replica_methods: pgbackrest` in `patroni.yml` — when Patroni needs to rebuild a replica, it restores from S3 instead of streaming from the primary. Primary is not involved at all during replica creation.
+
+### Additional DBA Scenarios
+- **Rolling minor version upgrade** — upgrade PostgreSQL 17.x → 17.y one node at a time, replicas first, zero downtime
+- **Replication slot monitoring** — track slot lag, prevent disk bloat from abandoned slots
+- **Synchronous replication** — configure `synchronous_standby_names` for zero data loss (RPO=0) at the cost of write latency
+
+### Infrastructure
+- **Multi-AZ deployment** — spread nodes across availability zones for true infrastructure-level HA
+- **Terraform automation** — automate the entire AWS infrastructure setup (VPC, EC2, IAM, S3, VPC endpoint)
+- **Ansible playbooks** — automate PostgreSQL, Patroni, etcd, HAProxy, Keepalived, pgBackRest installation and configuration
