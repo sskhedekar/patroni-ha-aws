@@ -31,7 +31,13 @@ sudo -u postgres patronictl -c /etc/patroni/patroni.yml resume --wait
 
 ## Critical warning
 
-Pause does **NOT** protect you from failure — it prevents Patroni from **reacting** to failure. If the primary dies while paused, the cluster goes read-only until you manually intervene or run `resume`.
+Pause does **NOT** protect you from failure — it prevents Patroni from **reacting** to failure. If the primary dies while paused:
+
+- **Writes fail** — no primary to accept them, port 5000 has no healthy backend
+- **Reads continue** — HAProxy still routes port 5001 to healthy replicas
+- **No automatic failover** — Patroni will not elect a new primary until you run `resume`
+
+To restore writes: either run `patronictl resume` (triggers automatic election) or manually promote a replica.
 
 ---
 

@@ -30,6 +30,8 @@ Both replicas had zero replication lag when the primary stopped. Patroni has **n
 
 Because the primary was stopped cleanly (graceful shutdown, 0 lag at time of stop), **pg_rewind was not needed**. The stopped node's WAL was a clean subset of the new primary's WAL — no divergence. It rejoined via normal streaming replication.
 
+> **In a real crash scenario:** If the primary crashed mid-write with replication lag, the WAL would have diverged between the old primary and the new primary's timeline. Patroni detects this automatically and runs `pg_rewind` before rejoining — copying only the changed blocks from the new primary to reconcile the diverged WAL. This is why `use_pg_rewind: true` and `wal_log_hints: on` are configured in `patroni.yml`.
+
 ---
 
 ## Failover evidence
