@@ -48,11 +48,13 @@ sudo -u postgres env EDITOR=vi patronictl -c /etc/patroni/patroni.yml edit-confi
 *`patronictl list` showing `pending_restart * shared_buffers: 256MB→512MB` on all 3 nodes — Patroni tracks exactly what changed and why each node needs a restart*
 
 ```bash
-# Restart replicas first — zero app impact
+# Check current leader first — do not assume which node is primary
+sudo -u postgres patronictl -c /etc/patroni/patroni.yml list
+# Restart replicas first (any node NOT showing Role=Leader) — zero app impact
 sudo -u postgres patronictl -c /etc/patroni/patroni.yml restart pg-cluster pg-node-1
 sudo -u postgres patronictl -c /etc/patroni/patroni.yml restart pg-cluster pg-node-3
 
-# Restart primary last — brief ~1-2s write blip
+# Restart primary last (the node showing Role=Leader) — brief ~1-2s write blip
 sudo -u postgres patronictl -c /etc/patroni/patroni.yml restart pg-cluster pg-node-2
 ```
 
