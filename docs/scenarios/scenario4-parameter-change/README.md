@@ -23,7 +23,8 @@ SELECT name, context FROM pg_settings WHERE name IN ('shared_buffers', 'work_mem
 sudo -u postgres env EDITOR=vi patronictl -c /etc/patroni/patroni.yml edit-config
 # Add: work_mem: 16MB
 
-# Reload all 3 nodes — no restart, no downtime
+# Patroni automatically applies reload-only changes on its next loop iteration (within 10s)
+# patronictl reload just forces it immediately — not required
 sudo -u postgres patronictl -c /etc/patroni/patroni.yml reload pg-cluster
 
 # Verify
