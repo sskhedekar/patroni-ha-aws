@@ -17,7 +17,7 @@ pgbr-host (10.0.0.20)
 S3: pg-cluster-pgbackrest (ap-south-1)
 ```
 
-**WAL archiving:** Each PG node pushes WAL directly to S3 via `archive_command`.  
+**WAL archiving:** Only the current primary pushes WAL to S3 via `archive_command`. When a failover occurs, the new primary automatically takes over archiving — ensuring a continuous WAL chain with no gaps across leadership changes.  
 **Backup:** pgbr-host SSHes into standby nodes, reads data files, writes compressed backup to S3.
 
 ---
