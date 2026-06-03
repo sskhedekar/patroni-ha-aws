@@ -222,10 +222,24 @@ sudo chown postgres:postgres /etc/patroni/patroni.yml && sudo chmod 600 /etc/pat
 sudo systemctl enable patroni && sudo systemctl start patroni
 ```
 
-> **Important:** Start pg-node-1 first, wait for it to become primary, then start pg-node-2 and pg-node-3.
+> **Important:** Start pg-node-1 first. Wait for it to initialise and become primary before starting pg-node-2 and pg-node-3. Starting all 3 simultaneously causes a bootstrap race — only one node can initialise the cluster.
 
+**Verify pg-node-1 is primary before proceeding:**
 ```bash
 sudo -u postgres patronictl -c /etc/patroni/patroni.yml list
+# Wait until pg-node-1 shows: Role=Leader, State=running
+# This typically takes 15-30 seconds
+```
+
+**Then start pg-node-2 and pg-node-3** — they will join as replicas automatically:
+```bash
+sudo systemctl enable patroni && sudo systemctl start patroni  # on pg-node-2 and pg-node-3
+```
+
+**Verify all 3 nodes:**
+```bash
+sudo -u postgres patronictl -c /etc/patroni/patroni.yml list
+# Expected: pg-node-1 Leader, pg-node-2 and pg-node-3 Replica | streaming | lag=0
 ```
 
 ---
