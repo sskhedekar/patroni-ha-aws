@@ -306,7 +306,16 @@ sudo apt install -y keepalived
 
 **AWS prerequisite:** Assign `10.0.0.100` as a secondary private IP to pg-node-1's ENI in EC2 console.
 
-Create `/etc/keepalived/notify.sh` — uses AWS CLI + IMDS to reassign the VIP secondary IP to the new MASTER's ENI on state change.
+Copy [`scripts/notify.sh`](../../scripts/notify.sh) to `/etc/keepalived/notify.sh` on all 3 PG nodes:
+
+```bash
+sudo cp notify.sh /etc/keepalived/notify.sh
+sudo chmod +x /etc/keepalived/notify.sh
+```
+
+Called automatically by Keepalived on VRRP state change. Fetches ENI ID, region, and interface name dynamically from EC2 instance metadata — no hardcoded values. On MASTER: moves VIP `10.0.0.100` to this node's ENI via AWS API. On BACKUP/FAULT: removes VIP from OS interface.
+
+> **Note:** `VIP="10.0.0.100"` is the only hardcoded value in the script. If you use a different virtual IP, update this one line before copying to the nodes.
 
 `/etc/keepalived/keepalived.conf` — node-specific:
 - `interface enX0` (EC2 Nitro — not eth0)
