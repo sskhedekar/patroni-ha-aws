@@ -89,7 +89,7 @@ export TF_VAR_key_pair_name=<your-key-pair>
 terraform init && terraform apply
 ```
 
-Creates all 26 resources in ~30 seconds: VPC, subnets, security groups, 4 EC2 instances, Elastic IPs, IAM role, S3 bucket, and VPC endpoint. See [terraform/README.md](terraform/README.md) for full details.
+Creates all 26 resources in ~30 seconds: VPC, subnets, security groups, 4 EC2 instances, Elastic IPs, IAM role, S3 bucket, and VPC endpoint. [scripts/app-traffic.sh](scripts/app-traffic.sh) is placed on each PG node automatically via EC2 user data. See [terraform/README.md](terraform/README.md) for full details.
 
 ---
 
