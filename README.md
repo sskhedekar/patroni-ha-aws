@@ -76,6 +76,23 @@ A fully manual setup of a 3-node PostgreSQL High Availability cluster on AWS EC2
 
 ---
 
+## Infrastructure Provisioning
+
+AWS infrastructure can be recreated from scratch using Terraform — no manual console steps required.
+
+```bash
+cd terraform/
+export AWS_ACCESS_KEY_ID=<your-access-key>
+export AWS_SECRET_ACCESS_KEY=<your-secret-key>
+export AWS_DEFAULT_REGION=<your-region>
+export TF_VAR_key_pair_name=<your-key-pair>
+terraform init && terraform apply
+```
+
+Creates all 26 resources in ~30 seconds: VPC, subnets, security groups, 4 EC2 instances, Elastic IPs, IAM role, S3 bucket, and VPC endpoint. See [terraform/README.md](terraform/README.md) for full details.
+
+---
+
 ## Traffic Simulation
 
 [scripts/app-traffic.sh](scripts/app-traffic.sh) — continuous read/write traffic via VIP, showing real-time impact of each scenario:
@@ -95,6 +112,19 @@ TIME       STATUS       WRITE(primary)     READ(replica)
 ```
 patroni-ha-cluster/
 ├── README.md
+├── terraform/                      # AWS infrastructure as code
+│   ├── main.tf                     # Provider + data sources
+│   ├── network.tf                  # VPC, subnet, IGW, route table, S3 endpoint
+│   ├── security_group.tf           # Inbound/outbound rules
+│   ├── ec2.tf                      # EC2 instances + Elastic IPs
+│   ├── iam.tf                      # IAM role, policies, instance profile
+│   ├── s3.tf                       # S3 bucket for pgBackRest
+│   ├── outputs.tf                  # Public IPs + SSH commands
+│   ├── variables.tf                # Variable schema with defaults
+│   ├── terraform.tfvars            # Node configuration
+│   ├── terraform-deployer-policy.json  # Scoped IAM policy for deployer
+│   └── scripts/
+│       └── userdata-pg-node.sh     # Places app-traffic.sh on first boot
 ├── docs/
 │   ├── setup-guide.md              # Concise setup from scratch
 │   ├── architecture.md             # Detailed architecture diagrams
@@ -108,7 +138,8 @@ patroni-ha-cluster/
 │       ├── scenario7-pgbackrest/   # pgBackRest S3 backup
 │       └── scenario8-monitoring/   # Cluster health monitoring
 ├── scripts/
-│   └── app-traffic.sh
+│   ├── app-traffic.sh              # Simulates continuous read/write traffic
+│   └── notify.sh                   # Keepalived notify script — moves VIP via AWS API
 └── screenshots/                    # General cluster screenshots
 ```
 
@@ -134,4 +165,4 @@ patroni-ha-cluster/
 | Connection Pooling | PgBouncer between application and HAProxy |
 | Backup | `create_replica_methods: pgbackrest` — Patroni rebuilds replicas from S3, not from primary |
 | DBA Scenarios | Rolling minor version upgrade, replication slot monitoring, synchronous replication |
-| Infrastructure | Multi-AZ deployment, Terraform for AWS setup, Ansible for cluster automation |
+| Infrastructure | Multi-AZ deployment, Ansible for cluster automation |
