@@ -13,6 +13,7 @@ Recreates the full AWS infrastructure for the 3-node Patroni HA cluster.
 - IAM Role + instance profile (VIP management + S3 access)
 - S3 bucket `pg-cluster-pgbackrest` (SSE-S3, no public access)
 - VPC Gateway Endpoint for S3
+- `app-traffic.sh` placed at `/home/ubuntu/app-traffic.sh` on all PG nodes via EC2 user data (ready to use after cluster setup)
 
 ## Prerequisites
 
