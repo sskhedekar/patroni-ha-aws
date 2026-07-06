@@ -78,7 +78,7 @@ A fully manual setup of a 3-node PostgreSQL High Availability cluster on AWS EC2
 
 ## Infrastructure Provisioning
 
-AWS infrastructure can be recreated from scratch using Terraform — no manual console steps required.
+AWS infrastructure can be recreated from scratch using Terraform. Prerequisites: an IAM user with the scoped policy from `terraform/terraform-deployer-policy.json` and an EC2 key pair in your target region.
 
 ```bash
 cd terraform/
